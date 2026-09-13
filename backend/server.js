@@ -7,7 +7,7 @@ import Club from './models/Club.js'
 import authenticateToken from './middleware/authMiddleware.js'
 import User from './models/User.js'
 import multer from 'multer'
-
+const PORT = process.env.PORT || 5000
 const app = express()
 
 // --------------------------------
@@ -475,7 +475,6 @@ app.delete('/api/clubs/:id', authenticateToken, async (req, res) => {
 // START SERVER
 // --------------------------------
 
-const PORT = 5000
 
 console.log(
   'MongoDB URI loaded:',
