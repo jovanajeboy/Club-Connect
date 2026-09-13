@@ -79,7 +79,12 @@ app.use(
 app.get('/', (req, res) => {
   res.send('ClubConnect Backend is running!')
 })
-
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'ClubConnect backend is healthy'
+  })
+})
 // --------------------------------
 // GET ALL CLUBS
 // --------------------------------
