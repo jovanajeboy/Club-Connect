@@ -173,23 +173,3 @@ Instead of providing only a recommendation score, ClubConnect also provides unde
                   │   Clubs Collection   │
                   └──────────────────────┘
 ```
-##Clone the repository
-git clone https://github.com/jovanajeboy/Club-Connect
-cd club-recruitment-platform
-
-##Install dependencies
-npm install
-
-###Configure environment variables
-Create a .env file in the project root:
-MONGO_URI=YOUR_MONGODB_CONNECTION_STRING
-JWT_SECRET=YOUR_JWT_SECRET
-
-Create a .env.local file:
-VITE_API_URL=http://localhost:5000
-
-###Start the backend
-Open a terminal in VS Code and run: node backend/server.js
-
-##Start the frontend
-Open another terminal in VS Code and run: npm run dev
