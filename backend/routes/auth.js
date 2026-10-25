@@ -2,6 +2,9 @@ import express from 'express'
 import bcrypt from 'bcryptjs'
 import User from '../models/User.js'
 import jwt from 'jsonwebtoken'
+import { authenticator } from '@otplib/v12-adapter'
+import QRCode from 'qrcode'
+import authenticateToken from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
@@ -64,7 +67,7 @@ router.post('/register', async (req, res) => {
 // Student login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { email, password, mfaCode } = req.body
 
     if (!email || !password) {
       return res.status(400).json({
@@ -85,11 +88,32 @@ router.post('/login', async (req, res) => {
       user.password
     )
 
-    if (!passwordMatch) {
-      return res.status(401).json({
-        message: 'Invalid email or password.'
-      })
+    
+    // Require an authenticator code when MFA is enabled
+    if (user.mfaEnabled) {
+      if (!/^\d{6}$/.test(String(mfaCode || ''))) {
+        return res.status(401).json({
+          message: 'Authenticator code required.'
+        })
+      }
+
+      const userWithMfaSecret = await User.findById(user._id)
+        .select('+mfaSecret')
+
+      if (
+        !userWithMfaSecret ||
+        !userWithMfaSecret.mfaSecret ||
+        !authenticator.verify({
+          token: String(mfaCode),
+          secret: userWithMfaSecret.mfaSecret
+        })
+      ) {
+        return res.status(401).json({
+          message: 'Invalid email, password, or authenticator code.'
+        })
+      }
     }
+
 
     const token = jwt.sign(
   {
@@ -124,8 +148,13 @@ res.json({
     })
   }
 })
-router.put('/profile/:id', async (req, res) => {
+router.put('/profile/:id', authenticateToken, async (req, res) => {
   try {
+    if (req.user.userId !== req.params.id) {
+  return res.status(403).json({
+    message: 'You can only update your own profile.'
+  })
+}
     const {
       branch,
       year,
@@ -175,4 +204,86 @@ router.put('/profile/:id', async (req, res) => {
     })
   }
 })
+// Start TOTP MFA enrollment
+router.post('/mfa/setup', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .select('+mfaSecret +mfaPendingSecret')
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' })
+    }
+
+    const secret = authenticator.generateSecret()
+
+    user.mfaPendingSecret = secret
+    await user.save()
+
+    const otpauth = authenticator.keyuri(
+      user.email,
+      'ClubConnect',
+      secret
+    )
+
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauth)
+
+    res.json({
+      message: 'Scan the QR code with your authenticator app, then verify the code.',
+      qrCode: qrCodeDataUrl
+    })
+  } catch (error) {
+    console.error('MFA setup failed:', error.message)
+    res.status(500).json({ message: 'MFA setup failed.' })
+  }
+})
+
+ // Verify TOTP code and enable MFA
+router.post('/mfa/verify-setup', authenticateToken, async (req, res) => {
+  try {
+    const { code } = req.body
+
+    if (!/^\d{6}$/.test(String(code || ''))) {
+      return res.status(400).json({
+        message: 'Please provide a valid six-digit code.'
+      })
+    }
+
+    const user = await User.findById(req.user.userId)
+      .select('+mfaSecret +mfaPendingSecret')
+
+    if (!user || !user.mfaPendingSecret) {
+      return res.status(400).json({
+        message: 'Start MFA setup before verifying a code.'
+      })
+    }
+
+    const valid = authenticator.verify({
+      token: String(code),
+      secret: user.mfaPendingSecret
+    })
+
+    if (!valid) {
+      return res.status(401).json({
+        message: 'Invalid authenticator code.'
+      })
+    }
+
+    user.mfaSecret = user.mfaPendingSecret
+    user.mfaPendingSecret = null
+    user.mfaEnabled = true
+
+    await user.save()
+
+    res.json({
+      message: 'Multi-factor authentication enabled successfully.',
+      mfaEnabled: true
+    })
+  } catch (error) {
+    console.error('MFA verification failed:', error.message)
+    res.status(500).json({
+      message: 'MFA verification failed.'
+    })
+  }
+})
+
 export default router

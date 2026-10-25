@@ -10,14 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@otplib/v12-adapter": "^13.5.0",
     "@tailwindcss/vite": "^4.3.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
+    "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.5",
-    "multer": "^2.3.0",
+    "multer": "^2.5.0",
+    "otplib": "^13.5.0",
+    "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3"

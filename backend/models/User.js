@@ -20,6 +20,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+        mfaEnabled: {
+      type: Boolean,
+      default: false
+    },
+
+    mfaSecret: {
+      type: String,
+      default: null,
+      select: false
+    },
+
+    mfaPendingSecret: {
+      type: String,
+      default: null,
+      select: false
+    },
 
     role: {
       type: String,

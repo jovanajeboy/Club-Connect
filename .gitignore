@@ -25,3 +25,10 @@ dist-ssr
 node_modules
 .env
 .env.local
+
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+coverage/

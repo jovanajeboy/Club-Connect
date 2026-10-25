@@ -1,12 +1,22 @@
 import express from 'express'
 import cors from 'cors'
 import mongoose from 'mongoose'
-import 'dotenv/config'
 import authRoutes from './routes/auth.js'
 import Club from './models/Club.js'
 import authenticateToken from './middleware/authMiddleware.js'
 import User from './models/User.js'
 import multer from 'multer'
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import dns from 'node:dns'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') })
+
+
 const PORT = process.env.PORT || 5000
 const app = express()
 
@@ -485,7 +495,7 @@ console.log(
   'MongoDB URI loaded:',
   !!process.env.MONGO_URI
 )
-
+dns.setServers(['8.8.8.8', '1.1.1.1'])
 mongoose
   .connect(process.env.MONGO_URI)
 

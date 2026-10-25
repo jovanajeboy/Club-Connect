@@ -177,8 +177,9 @@ function App() {
               {
                 method: 'PUT',
                 headers: {
-                  'Content-Type': 'application/json'
-                },
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('clubconnect_token')}`
+},
                 body: JSON.stringify(profile)
               }
             )
